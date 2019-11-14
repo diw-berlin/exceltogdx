@@ -141,7 +141,7 @@ def exceltogdx(excel_file, gdx_file, csv_file=None):
             df.loc[:, 'value'] = 'c_bool(True)'
             df.dropna(inplace=True)
             dc[k] = df
-    os.makedirs(gdx_file, parents=True, exist_ok=True)
+    os.makedirs(os.path.abspath(os.path.join(gdx_file, os.pardir)), exist_ok=True)
     print('generating gdx file...')
     gdxpds.to_gdx(dc, gdx_file)
     print('Done!')
