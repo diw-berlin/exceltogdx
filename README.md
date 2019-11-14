@@ -10,4 +10,6 @@ Required library:
  - pandas
  - openpyxl
 
-<font color='red'>If you find and error in the code, please rise and issue here.</font>
+<font color='red'>If you find and error in the code, please raise an issue or solve it by pushing a commit.</font>
+
+See notebook example.ipynb
