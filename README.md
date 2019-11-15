@@ -1,4 +1,4 @@
-# exceltogdx
+# excel to gdx
 A simple python tool to extract sets and parameters from excel files by creating GDX files for GAMS
 
 See sheet name 'py' in the excel files that describes sets and parameters settings. Similar approach for https://www.gams.com/latest/docs/T_GDXXRW.html
