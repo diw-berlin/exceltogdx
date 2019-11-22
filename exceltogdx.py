@@ -105,7 +105,7 @@ def exceltogdx(excel_file, gdx_file, csv_file=None):
     excel_file: input file path
     gdx_file: output file path
     csv_file: if None, it looks at excel file to find sheet with name 'py'
-              that constains the instructions to get sets and parameters.
+              that contains the instructions to get sets and parameters.
               Otherwise, csv file path.
     '''
     if csv_file == None:
@@ -121,20 +121,22 @@ def exceltogdx(excel_file, gdx_file, csv_file=None):
         coord = xlsdynamicecke(v['type'], v['startcell'], v['rdim'], v['cdim'], v['sheet_name'], wb)
         if v['type'] == 'par':
             print('par: ', k)
-            if v['cdim'] > 0:
-                df = pd.read_excel(excel_file, sheet_name=v['sheet_name'], skiprows=coord[0]-1, nrows=coord[2]-coord[0]+2, usecols=range(coord[1], coord[3]))
-                # this can be re-code
-                os.makedirs('tmp', exist_ok=True)
-                df.to_csv(os.path.join('tmp', k+'.csv'), index=False)
-                df = pd.read_csv(os.path.join('tmp', k+'.csv'), header=list(range(v['cdim']+1)), skipinitialspace=True)
-                # ends prev comment
-                df.columns = df.columns.droplevel(0)
-                df = df.set_index(df.columns[list(range(v['rdim']))].to_list()).stack(list(range(df.columns.nlevels))).reset_index().rename(columns={0: 'value'})
-                dc[k] = df.rename(columns={c: '*' for c in df.columns if c != 'value'})
+            df = pd.read_excel(excel_file, sheet_name=v['sheet_name'], skiprows=coord[0], nrows=coord[2] - coord[0] + 1,
+                               usecols=range(coord[1], coord[3]), mangle_dupe_cols=False)
+            if v['cdim'] == 0:
+                df = df.set_index(df.columns[list(range(v['rdim']))].to_list()).rename_axis(
+                    ['level_0' if v['rdim'] == 1 else None][0], axis=0).reset_index().rename(
+                    columns={df.columns.to_list()[-1]: 'value'})
+            elif v['cdim'] == 1:
+                df = df.set_index(df.columns[list(range(v['rdim']))].to_list()).stack(
+                    list(range(df.columns.nlevels))).reset_index().rename(columns={0: 'value'})
+            elif v['cdim'] > 1:
+                df = df.T.set_index(list(range(v['cdim']-1)), append=True).T
+                df = df.set_index(df.columns[list(range(v['rdim']))].to_list()).stack(
+                    list(range(df.columns.nlevels))).reset_index().rename(columns={0: 'value'})
             else:
-                df = pd.read_excel(excel_file, sheet_name=v['sheet_name'], skiprows=coord[0], nrows=coord[2]-coord[0]+1, usecols=range(coord[1], coord[3]))
-                df = df.set_index(df.columns[list(range(v['rdim']))].to_list()).rename_axis(['level_0' if v['rdim'] == 1 else None][0], axis=0).reset_index().rename(columns={df.columns.to_list()[-1]: 'value'})
-                dc[k] = df.rename(columns={c: '*' for c in df.columns if c != 'value'})
+                raise Exception('is this a parameter, verify the cdim. must be positive integer')
+            dc[k] = df.rename(columns={c: '*' for c in df.columns if c != 'value'})
         elif v['type'] == 'set':
             print('set: ', k)
             df = pd.DataFrame({'*': coord})
