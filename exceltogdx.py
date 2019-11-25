@@ -20,6 +20,7 @@ def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb):
     return set or table coord.
     '''
     sheet = wb[sheetname]
+    data = []
     string = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
     def col2num(letters):
@@ -31,6 +32,13 @@ def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb):
             if c in string:
                 num = num * 26 + (ord(c.upper()) - ord('A')) + 1
         return num
+
+    def colnum_string(n):
+        strings = ""
+        while n > 0:
+            n, remainder = divmod(n - 1, 26)
+            strings = chr(65 + remainder) + strings
+        return strings
 
     def natural_keys(text):
         '''
@@ -52,52 +60,65 @@ def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb):
     col = col2num(cell[:cut])
     if typ == 'par':
         if cdim == 0:
+            j = 0
             for i, r in enumerate(sheet.iter_rows(min_row=row+1, min_col=col, max_col=col, values_only=True)):
-                if r[0] == None:
-                    i = i - 1
+                j = i
+                if r[0] is None:
+                    j = i - 1
                     break
             max_col = rdim + 1
-            max_row = row + i
-            coord = [row-2, col-1, max_row-1, max_col]
+            max_row = row + j
+            rng = colnum_string(col) + str(row - 1) + ':' + colnum_string(max_col) + str(max_row)
+            data = sheet[rng]
+            output = [[cells.value for cells in row] for row in data]
+            print(rng)
+            print(output)
         else:
-            for i, c in enumerate(sheet.iter_cols(min_row=row, max_row=row, min_col=col+1, values_only=True)):
-                if c[0] == None:
-                    i = i - 1
+            j = 0
+            for i, c in enumerate(sheet.iter_cols(min_row=row, max_row=row, min_col=col+rdim, values_only=True)):
+                j = i
+                if c[0] is None:
+                    j = i - 1
                     break
-            max_col = col + i + 1
-            for i, r in enumerate(sheet.iter_rows(min_row=row+1, min_col=col, max_col=col, values_only=True)):
-                if r[0] == None:
-                    i = i - 1
+            max_col = col + j + rdim
+            for i, r in enumerate(sheet.iter_rows(min_row=row+cdim, min_col=col, max_col=col, values_only=True)):
+                j = i
+                if r[0] is None:
+                    j = i - 1
                     break
-            max_row = row + i
-            coord = [row-1, col-1, max_row-1, max_col]
+            max_row = row + j + cdim
+            rng = cell + ':' + colnum_string(max_col) + str(max_row)
+            data = sheet[rng]
+            output = [[cells.value for cells in row] for row in data]
+            print(rng)
+            print(output)
     elif typ == 'set':
         setls = []
         if rdim == 1:
             for i, r in enumerate(sheet.iter_rows(min_row=row, min_col=col, max_col=col, values_only=True)):
-                if r[0] != None:
+                if r[0] is not None:
                     setls.append(r[0])
                 else:
                     break
             if all([isinstance(s, (int, float)) for s in list(set(setls))]):
-                coord = sorted(list(set(setls)))
+                output = sorted(list(set(setls)))
             else:
-                coord = sorted(list(set(setls)), key=natural_keys)
+                output = sorted(list(set(setls)), key=natural_keys)
 
         elif cdim == 1:
             for i, c in enumerate(sheet.iter_cols(min_row=row, max_row=row, min_col=col, values_only=True)):
-                if c[0] != None:
+                if c[0] is not None:
                     setls.append(c[0])
                 else:
                     break
             if all([isinstance(s, (int, float)) for s in list(set(setls))]):
-                coord = sorted(list(set(setls)))
+                output = sorted(list(set(setls)))
             else:
-                coord = sorted(list(set(setls)), key=natural_keys)
+                output = sorted(list(set(setls)), key=natural_keys)
         else:
             raise ValueError('Set must have either rdim or cdim as 1, check dim in py sheet')
     del sheet
-    return coord
+    return output
 
 
 def exceltogdx(excel_file, gdx_file, csv_file=None):
@@ -108,38 +129,41 @@ def exceltogdx(excel_file, gdx_file, csv_file=None):
               that contains the instructions to get sets and parameters.
               Otherwise, csv file path.
     '''
-    if csv_file == None:
+    if csv_file is None:
         mapping = pd.read_excel(excel_file, sheet_name='py', index_col='symbol')
     else:
         mapping = pd.read_csv(csv_file, index_col='symbol')
 
     with open(excel_file, 'rb') as f:
-        data = BytesIO(f.read())
-    wb = load_workbook(data)
+        datas = BytesIO(f.read())
+    wb = load_workbook(datas)
     dc = {}
     for k, v in mapping.iterrows():
-        coord = xlsdynamicecke(v['type'], v['startcell'], v['rdim'], v['cdim'], v['sheet_name'], wb)
+        xlsvalues = xlsdynamicecke(v['type'], v['startcell'], v['rdim'], v['cdim'], v['sheet_name'], wb)
         if v['type'] == 'par':
             print('par: ', k)
-            df = pd.read_excel(excel_file, sheet_name=v['sheet_name'], skiprows=coord[0], nrows=coord[2] - coord[0] + 1,
-                               usecols=range(coord[1], coord[3]), mangle_dupe_cols=False)
+            df = pd.DataFrame(xlsvalues)
             if v['cdim'] == 0:
                 df = df.set_index(df.columns[list(range(v['rdim']))].to_list()).rename_axis(
                     ['level_0' if v['rdim'] == 1 else None][0], axis=0).reset_index().rename(
                     columns={df.columns.to_list()[-1]: 'value'})
             elif v['cdim'] == 1:
-                df = df.set_index(df.columns[list(range(v['rdim']))].to_list()).stack(
-                    list(range(df.columns.nlevels))).reset_index().rename(columns={0: 'value'})
+                df = df.T.set_index(0, append=False).T
+                df = df.set_index(df.columns[list(range(v['rdim']))].to_list())
+                del df.columns.name
+                df = df.stack(list(range(df.columns.nlevels))).reset_index().rename(columns={0: 'value'})
             elif v['cdim'] > 1:
-                df = df.T.set_index(list(range(v['cdim']-1)), append=True).T
-                df = df.set_index(df.columns[list(range(v['rdim']))].to_list()).stack(
-                    list(range(df.columns.nlevels))).reset_index().rename(columns={0: 'value'})
+                df = df.T.set_index(list(range(v['cdim'])), append=False).T
+                df = df.set_index(df.columns[list(range(v['rdim']))].to_list())
+                print('lev:',df.columns.nlevels)
+                # del df.columns.name
+                df = df.stack(list(range(df.columns.nlevels))).reset_index().rename(columns={0: 'value'})
             else:
                 raise Exception('is this a parameter, verify the cdim. must be positive integer')
             dc[k] = df.rename(columns={c: '*' for c in df.columns if c != 'value'})
         elif v['type'] == 'set':
             print('set: ', k)
-            df = pd.DataFrame({'*': coord})
+            df = pd.DataFrame({'*': xlsvalues})
             df.loc[:, 'value'] = 'c_bool(True)'
             df.dropna(inplace=True)
             dc[k] = df
