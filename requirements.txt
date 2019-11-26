@@ -1,0 +1,10 @@
+appdirs
+
+docopt
+
+pandas
+
+numpy
+
+gdxpds
+openpyxl

@@ -1,5 +1,6 @@
 import gdxpds
 import pandas as pd
+import numpy as np
 from openpyxl import load_workbook
 from io import BytesIO
 import os
@@ -61,7 +62,7 @@ def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb):
     if typ == 'par':
         if cdim == 0:
             j = 0
-            for i, r in enumerate(sheet.iter_rows(min_row=row+1, min_col=col, max_col=col, values_only=True)):
+            for i, r in enumerate(sheet.iter_rows(min_row=row, min_col=col, max_col=col, values_only=True)):
                 j = i
                 if r[0] is None:
                     j = i - 1
@@ -72,7 +73,7 @@ def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb):
             data = sheet[rng]
             output = [[cells.value for cells in row] for row in data]
             print(rng)
-            print(output)
+            print(output[:3])
         else:
             j = 0
             for i, c in enumerate(sheet.iter_cols(min_row=row, max_row=row, min_col=col+rdim, values_only=True)):
@@ -81,17 +82,17 @@ def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb):
                     j = i - 1
                     break
             max_col = col + j + rdim
-            for i, r in enumerate(sheet.iter_rows(min_row=row+cdim, min_col=col, max_col=col, values_only=True)):
+            for i, r in enumerate(sheet.iter_rows(min_row=row+cdim+1, min_col=col, max_col=col, values_only=True)):
                 j = i
                 if r[0] is None:
                     j = i - 1
                     break
-            max_row = row + j + cdim
+            max_row = row + j + cdim + 1
             rng = cell + ':' + colnum_string(max_col) + str(max_row)
             data = sheet[rng]
             output = [[cells.value for cells in row] for row in data]
             print(rng)
-            print(output)
+            print(output[:3])
     elif typ == 'set':
         setls = []
         if rdim == 1:
@@ -121,13 +122,14 @@ def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb):
     return output
 
 
-def exceltogdx(excel_file, gdx_file, csv_file=None):
+def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None):
     '''
     excel_file: input file path
     gdx_file: output file path
     csv_file: if None, it looks at excel file to find sheet with name 'py'
               that contains the instructions to get sets and parameters.
               Otherwise, csv file path.
+    csv_copy: indicate folder where csv files are saved. None (Default): no csv files are created.
     '''
     if csv_file is None:
         mapping = pd.read_excel(excel_file, sheet_name='py', index_col='symbol')
@@ -136,37 +138,52 @@ def exceltogdx(excel_file, gdx_file, csv_file=None):
 
     with open(excel_file, 'rb') as f:
         datas = BytesIO(f.read())
-    wb = load_workbook(datas)
+    wb = load_workbook(datas,data_only=True)
     dc = {}
     for k, v in mapping.iterrows():
+        print(v['type'],': ', k)
         xlsvalues = xlsdynamicecke(v['type'], v['startcell'], v['rdim'], v['cdim'], v['sheet_name'], wb)
         if v['type'] == 'par':
-            print('par: ', k)
             df = pd.DataFrame(xlsvalues)
             if v['cdim'] == 0:
-                df = df.set_index(df.columns[list(range(v['rdim']))].to_list()).rename_axis(
-                    ['level_0' if v['rdim'] == 1 else None][0], axis=0).reset_index().rename(
-                    columns={df.columns.to_list()[-1]: 'value'})
+                df = df.T.set_index(0, append=False).T
+                try:
+                    df = df.set_index(df.columns[list(range(v['rdim']))].to_list())
+                except KeyError:
+                    raise KeyError("each rdim in parameter '{}' must have a heading (Don't leave it empty), not required for cdim".format(k))
+                df.index.names = list(range(1,df.index.nlevels+1))
             elif v['cdim'] == 1:
                 df = df.T.set_index(0, append=False).T
-                df = df.set_index(df.columns[list(range(v['rdim']))].to_list())
-                del df.columns.name
-                df = df.stack(list(range(df.columns.nlevels))).reset_index().rename(columns={0: 'value'})
+                try:
+                    df = df.set_index(df.columns[list(range(v['rdim']))].to_list())
+                except KeyError:
+                    raise KeyError("each rdim in parameter '{}' must have a heading (Don't leave it empty), not required for cdim".format(k))
+                df = df.stack(list(range(df.columns.nlevels-1,-1,-1)))
+                df.index.names = list(range(1,df.index.nlevels+1))
+                df = pd.DataFrame(df)
             elif v['cdim'] > 1:
                 df = df.T.set_index(list(range(v['cdim'])), append=False).T
-                df = df.set_index(df.columns[list(range(v['rdim']))].to_list())
-                print('lev:',df.columns.nlevels)
-                # del df.columns.name
-                df = df.stack(list(range(df.columns.nlevels))).reset_index().rename(columns={0: 'value'})
+                try:
+                    df = df.set_index(df.columns[list(range(v['rdim']))].to_list())
+                except KeyError:
+                    raise KeyError("each rdim in parameter '{}' must have a heading (Don't leave it empty), not required for cdim".format(k))
+                df = df.stack(list(range(df.columns.nlevels-1,-1,-1)))
+                df.index.names = list(range(1,df.index.nlevels+1))
+                df = pd.DataFrame(df)
             else:
-                raise Exception('is this a parameter, verify the cdim. must be positive integer')
+                raise Exception('is "{}" a parameter?, verify cdim on "py" sheet. cdim must be positive integer'.format(k))
+            df = df.reset_index().rename(columns={df.columns.to_list()[-1]: 'value'})
+            df.iloc[df[df['value'] == 'inf'].index] = np.inf
             dc[k] = df.rename(columns={c: '*' for c in df.columns if c != 'value'})
         elif v['type'] == 'set':
-            print('set: ', k)
             df = pd.DataFrame({'*': xlsvalues})
-            df.loc[:, 'value'] = 'c_bool(True)'
+            df.loc[:, 'value'] = 'True'
             df.dropna(inplace=True)
             dc[k] = df
+        if csv_copy is not None:
+            os.makedirs(csv_copy, exist_ok=True)
+            name = v['type'] + '_' + k + '.csv'
+            df.to_csv(os.path.join(csv_copy, name), index=False)
     os.makedirs(os.path.abspath(os.path.join(gdx_file, os.pardir)), exist_ok=True)
     print('generating gdx file...')
     gdxpds.to_gdx(dc, gdx_file)
