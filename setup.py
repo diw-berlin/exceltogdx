@@ -26,7 +26,7 @@ def package_files(directory):
 
 setup(
     name='exceltogdx',
-    version="0.1.0",
+    version="0.0.1",
     packages=packages,
     author="Carlos Gaete",
     author_email="cdgaete@gmail.com",
