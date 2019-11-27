@@ -13,7 +13,7 @@ Required library:
  
 Installation
  
-    pip install git+https://github.com/diw-berlin/exceltogdx.git
+    pip install exceltogdx
  
 Delete
  
