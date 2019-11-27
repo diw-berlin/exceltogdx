@@ -10,6 +10,14 @@ Required library:
  - pandas
  - openpyxl
  - GAMS API for python
+ 
+Installation
+ 
+    pip install git+https://github.com/diw-berlin/exceltogdx.git
+ 
+Delete
+ 
+     pip uninstall exceltogdx
 
 <font color='red'>If you find and error in the code, please raise an issue or solve it by pushing a commit.</font>
 
