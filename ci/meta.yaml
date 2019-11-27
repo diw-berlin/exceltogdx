@@ -1,5 +1,5 @@
 package:
-  name: emobpy-dev
+  name: exceltogdx-dev
   version: {{ environ['VERSION'] }}
 
 source:
@@ -24,14 +24,15 @@ requirements:
     - numpy
     - pytest
     - docopt
-    - numba
+    - gdxpds
+    - openpyxl
 
 test:
   imports:
-    - emobpy
+    - exceltogdx
 
 about:
-  home: https://github.com/diw-berlin/emobpy
+  home: https://github.com/diw-berlin/exceltogdx
   license: MIT License
-  summary: 'It creates vehicle driving profiles and charging availability profiles for battery electric vehicles based on mobility statistics'
+  summary: 'By providing a configuration table, this tool is able to read sets and parameter from an excel file and generate a gdx file as input for GAMS models'
 license_family: MIT

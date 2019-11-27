@@ -9,6 +9,7 @@ Required library:
  - gdxpds
  - pandas
  - openpyxl
+ - GAMS API for python
 
 <font color='red'>If you find and error in the code, please raise an issue or solve it by pushing a commit.</font>
 

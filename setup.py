@@ -7,7 +7,7 @@ if root_dir:
     os.chdir(root_dir)
 
 # Probably should be changed, __init__.py is no longer required for Python 3
-for dirpath, dirnames, filenames in os.walk('emobpy'):
+for dirpath, dirnames, filenames in os.walk('exceltogdx'):
     # Ignore dirnames that start with '.'
     if '__init__.py' in filenames:
         pkg = dirpath.replace(os.path.sep, '.')
@@ -25,7 +25,7 @@ def package_files(directory):
 
 
 setup(
-    name='emobpy',
+    name='exceltogdx',
     version="0.1.0",
     packages=packages,
     author="Carlos Gaete",
@@ -35,7 +35,7 @@ setup(
     # package_data={'your_name_here': package_files(os.path.join('your_library_name', 'data'))},
     # entry_points = {
     #     'console_scripts': [
-    #         'emobpy-cli = emobpy.bin.rename_me_cli:main',
+    #         'exceltogdx-cli = exceltogdx.bin.rename_me_cli:main',
     #     ]
     # },
     install_requires=[
@@ -43,11 +43,12 @@ setup(
         'docopt',
         'pandas',
         'numpy',
-        'numba',
+        'gdxpds',
+        'openpyxl',
     ],
-    url="https://github.com/diw-berlin/emobpy",
+    url="https://github.com/diw-berlin/exceltogdx",
     long_description=open('README.md').read(),
-    description='Creation of time series for battery electric vehicles modeling',
+    description='A simple python tool to extract sets and parameters from excel files by creating GDX files for GAMS',
     classifiers=[
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Developers',
@@ -65,6 +66,5 @@ setup(
         'Topic :: Scientific/Engineering :: Mathematics',
         'Topic :: Scientific/Engineering :: Visualization',
         'Topic :: Scientific/Engineering :: Energy',
-        'Topic :: Scientific/Engineering :: Mobility',
     ],
 )

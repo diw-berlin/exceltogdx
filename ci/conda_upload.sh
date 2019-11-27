@@ -1,5 +1,5 @@
 # Only need to change these two variables
-PKG_NAME=emobpy-dev
+PKG_NAME=exceltogdx-dev
 USER=cdgaete
 
 mkdir ~/conda-bld

@@ -2,4 +2,5 @@ appdirs
 docopt
 pandas
 numpy
-numba
+openpyxl
+gdxpds

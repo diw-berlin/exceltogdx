@@ -20,8 +20,8 @@ def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb):
     eg. xlsdynamicecke('set', C5', 1, 0, 'sheet1', workbook.object)
     return set or table coord.
     '''
+    cell = cell.upper()
     sheet = wb[sheetname]
-    data = []
     string = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
     def col2num(letters):
@@ -57,8 +57,11 @@ def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb):
             cut += 1
         else:
             break
-    row = int(cell[cut:])
-    col = col2num(cell[:cut])
+    rowstr = cell[cut:]
+    colstr = cell[:cut]
+
+    row = int(rowstr)
+    col = col2num(colstr.upper())
     if typ == 'par':
         if cdim == 0:
             j = 0
@@ -140,6 +143,7 @@ def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None):
         datas = BytesIO(f.read())
     wb = load_workbook(datas,data_only=True)
     dc = {}
+    df = pd.DataFrame()
     for k, v in mapping.iterrows():
         print(v['type'],': ', k)
         xlsvalues = xlsdynamicecke(v['type'], v['startcell'], v['rdim'], v['cdim'], v['sheet_name'], wb)
