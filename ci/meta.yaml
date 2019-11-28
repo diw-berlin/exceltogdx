@@ -26,6 +26,7 @@ requirements:
     - docopt
     - gdxpds
     - openpyxl
+    - xlrd >= 1.0.0
 
 test:
   imports:
