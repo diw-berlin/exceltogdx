@@ -139,9 +139,10 @@ def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None):
     else:
         mapping = pd.read_csv(csv_file, index_col='symbol')
 
+    print("loading excel file...")
     with open(excel_file, 'rb') as f:
         datas = BytesIO(f.read())
-    wb = load_workbook(datas,data_only=True)
+    wb = load_workbook(datas, data_only=True)
     dc = {}
     df = pd.DataFrame()
     for k, v in mapping.iterrows():
