@@ -178,7 +178,9 @@ def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None):
             else:
                 raise Exception('is "{}" a parameter?, verify cdim on "py" sheet. cdim must be positive integer'.format(k))
             df = df.reset_index().rename(columns={df.columns.to_list()[-1]: 'value'})
-            df.iloc[df[df['value'] == 'inf'].index] = np.inf
+            df['value'].iloc[df[df['value'] == 'inf'].index] = np.inf
+            df.loc[:,[c for c in df.columns if (c != 'value' and df[c].dtypes == float)]] = df[[c for c in df.columns if (c != 'value' and df[c].dtypes == float)]].astype(int)
+            df.loc[:,[c for c in df.columns if c != 'value']] = df[[c for c in df.columns if c != 'value']].astype(str)
             dc[k] = df.rename(columns={c: '*' for c in df.columns if c != 'value'})
         elif v['type'] == 'set':
             df = pd.DataFrame({'*': xlsvalues})
