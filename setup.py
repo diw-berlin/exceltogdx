@@ -45,7 +45,7 @@ setup(
         'numpy',
         'gdxpds',
         'openpyxl',
-        'xlrd >= 1.0.0',
+        'xlrd',
     ],
     url="https://github.com/diw-berlin/exceltogdx",
     long_description=open('README.md').read(),
