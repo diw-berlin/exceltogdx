@@ -163,7 +163,7 @@ def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None):
                     df = df.set_index(df.columns[list(range(v['rdim']))].to_list())
                 except KeyError:
                     raise KeyError("each rdim in parameter '{}' must have a heading (Don't leave it empty), not required for cdim".format(k))
-                df = df.stack(list(range(df.columns.nlevels-1,-1,-1)))
+                df = df.stack([0]*df.columns.nlevels)
                 df.index.names = list(range(1,df.index.nlevels+1))
                 df = pd.DataFrame(df)
             elif v['cdim'] > 1:
@@ -172,13 +172,13 @@ def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None):
                     df = df.set_index(df.columns[list(range(v['rdim']))].to_list())
                 except KeyError:
                     raise KeyError("each rdim in parameter '{}' must have a heading (Don't leave it empty), not required for cdim".format(k))
-                df = df.stack(list(range(df.columns.nlevels-1,-1,-1)))
+                df = df.stack([0]*df.columns.nlevels)
                 df.index.names = list(range(1,df.index.nlevels+1))
                 df = pd.DataFrame(df)
             else:
                 raise Exception('is "{}" a parameter?, verify cdim on "py" sheet. cdim must be positive integer'.format(k))
             df = df.reset_index().rename(columns={df.columns.to_list()[-1]: 'value'})
-            df['value'].iloc[df[df['value'] == 'inf'].index] = np.inf
+            df.loc[df[df['value'] == 'inf'].index, 'value'] = np.inf
             df.loc[:,[c for c in df.columns if (c != 'value' and df[c].dtypes == float)]] = df[[c for c in df.columns if (c != 'value' and df[c].dtypes == float)]].astype(int)
             df.loc[:,[c for c in df.columns if c != 'value']] = df[[c for c in df.columns if c != 'value']].astype(str)
             dc[k] = df.rename(columns={c: '*' for c in df.columns if c != 'value'})
