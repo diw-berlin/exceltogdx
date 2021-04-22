@@ -31,23 +31,14 @@ setup(
     author="Carlos Gaete",
     author_email="cdgaete@gmail.com",
     license=open('LICENSE').read(),
-    # Only if you have non-python data (CSV, etc.). Might need to change the directory name as well.
-    # package_data={'your_name_here': package_files(os.path.join('your_library_name', 'data'))},
-    # entry_points = {
-    #     'console_scripts': [
-    #         'exceltogdx-cli = exceltogdx.bin.rename_me_cli:main',
-    #     ]
-    # },
     install_requires=[
         'appdirs',
         'docopt',
         'pandas',
         'numpy',
-        'gdxpds',
         'openpyxl',
-        'xlrd',
+        'xlrd == 1.2.0',
     ],
-    url="https://github.com/diw-berlin/exceltogdx",
     long_description=open('README.md').read(),
     description='A simple python tool to extract sets and parameters from excel files by creating GDX files for GAMS',
     classifiers=[

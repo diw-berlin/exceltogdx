@@ -1,4 +1,4 @@
-import gdxpds
+from .gdxpds import to_gdx
 import pandas as pd
 import numpy as np
 from openpyxl import load_workbook
@@ -193,6 +193,6 @@ def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None):
             df.to_csv(os.path.join(csv_copy, name), index=False)
     os.makedirs(os.path.abspath(os.path.join(gdx_file, os.pardir)), exist_ok=True)
     print('generating gdx file...')
-    gdxpds.to_gdx(dc, gdx_file)
+    to_gdx(dc, gdx_file)
     print('Done!')
     return dc
