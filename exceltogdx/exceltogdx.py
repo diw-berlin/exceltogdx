@@ -1,4 +1,4 @@
-from .gdxpds import to_gdx
+from gdxpds import to_gdx
 import pandas as pd
 import numpy as np
 from openpyxl import load_workbook
