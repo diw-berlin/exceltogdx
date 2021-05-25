@@ -38,6 +38,7 @@ setup(
         'numpy',
         'openpyxl',
         'xlrd == 1.2.0',
+        'gdxpds',
     ],
     long_description=open('README.md').read(),
     description='A simple python tool to extract sets and parameters from excel files by creating GDX files for GAMS',
