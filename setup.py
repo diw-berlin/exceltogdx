@@ -23,7 +23,6 @@ def package_files(directory):
             paths.append(os.path.join('..', path, filename))
     return paths
 
-
 setup(
     name='exceltogdx',
     version="0.0.4",
@@ -32,32 +31,29 @@ setup(
     author_email="cdgaete@gmail.com",
     license=open('LICENSE').read(),
     install_requires=[
-        'appdirs',
-        'docopt',
         'pandas',
         'numpy',
         'openpyxl',
-        'xlrd == 1.2.0',
         'gdxpds',
     ],
     long_description=open('README.md').read(),
+    long_description_content_type="text/markdown",
     description='A simple python tool to extract sets and parameters from excel files by creating GDX files for GAMS',
     classifiers=[
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: BSD License',
+        'License :: OSI Approved :: MIT License',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+	    'Programming Language :: Python :: 3.9',
         'Topic :: Scientific/Engineering :: Information Analysis',
         'Topic :: Scientific/Engineering :: Mathematics',
-        'Topic :: Scientific/Engineering :: Visualization',
-        'Topic :: Scientific/Engineering :: Energy',
     ],
 )

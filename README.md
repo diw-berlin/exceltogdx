@@ -1,13 +1,16 @@
-# excel to gdx
+# Excel to gdx
 A simple python tool to extract sets and parameters from excel files by creating GDX files for GAMS
 
 See sheet name 'py' in the excel files that describes sets and parameters settings. Similar approach for https://www.gams.com/latest/docs/T_GDXXRW.html
 
 Particularly useful for linux and ios where GDXXRW.exe is not compatible, see here: https://forum.gamsworld.org/viewtopic.php?t=10418#p24019
 
+### <font color='green'>NEW FEATURE (v0.0.5):</font> <font color='red'>+INF, -INF, EPS</font> 
+
 Required library:
  - gdxpds
  - pandas
+ - numpy
  - openpyxl
  - GAMS API for python
  
@@ -19,6 +22,13 @@ Delete
  
      pip uninstall exceltogdx
 
-<font color='red'>If you find and error in the code, please raise an issue or solve it by pushing a commit.</font>
+See notebook [example.ipynb](https://github.com/diw-berlin/exceltogdx/tree/master/notebooks) and download the excel file [test.xlsx](https://github.com/diw-berlin/exceltogdx/tree/master/notebooks)
 
-See notebook example.ipynb
+```
+from exceltogdx import exceltogdx
+frames = exceltogdx('test.xlsx','test.gdx')
+```
+
+Repository: https://github.com/diw-berlin/exceltogdx
+
+<font color='red'>If you find and error in the code, please raise an issue or solve it by pushing a commit.</font>

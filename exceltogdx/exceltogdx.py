@@ -7,7 +7,7 @@ import os
 import re
 
 
-def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb):
+def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb, verbose=False):
     '''
     Returns a list of row and col of bottom-left corner of a table in pandas indexing format (from zero to inf).
     It stops when there is an empty cell in index (rows) or headings (columns).
@@ -75,8 +75,9 @@ def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb):
             rng = colnum_string(col) + str(row - 1) + ':' + colnum_string(max_col) + str(max_row)
             data = sheet[rng]
             output = [[cells.value for cells in row] for row in data]
-            print(rng)
-            print(output[:3])
+            if verbose:
+                print(rng)
+                print(output[:3])
         else:
             j = 0
             for i, c in enumerate(sheet.iter_cols(min_row=row, max_row=row, min_col=col+rdim, values_only=True)):
@@ -94,8 +95,9 @@ def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb):
             rng = cell + ':' + colnum_string(max_col) + str(max_row)
             data = sheet[rng]
             output = [[cells.value for cells in row] for row in data]
-            print(rng)
-            print(output[:3])
+            if verbose:
+                print(rng)
+                print(output[:3])
     elif typ == 'set':
         setls = []
         if rdim == 1:
@@ -125,29 +127,30 @@ def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb):
     return output
 
 
-def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None):
+def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None, verbose=False):
     '''
     excel_file: input file path
     gdx_file: output file path
     csv_file: if None, it looks at excel file to find sheet with name 'py'
-              that contains the instructions to get sets and parameters.
-              Otherwise, csv file path.
+                that contains the instructions to get sets and parameters.
+                Otherwise, csv file path.
     csv_copy: indicate folder where csv files are saved. None (Default): no csv files are created.
     '''
     if csv_file is None:
-        mapping = pd.read_excel(excel_file, sheet_name='py', index_col='symbol')
+        mapping = pd.read_excel(excel_file, sheet_name='py', index_col='symbol', engine='openpyxl')
     else:
         mapping = pd.read_csv(csv_file, index_col='symbol')
 
-    print("loading excel file...")
+    print(f"Loading excel file:{excel_file}")
     with open(excel_file, 'rb') as f:
         datas = BytesIO(f.read())
     wb = load_workbook(datas, data_only=True)
     dc = {}
     df = pd.DataFrame()
     for k, v in mapping.iterrows():
-        print(v['type'],': ', k)
-        xlsvalues = xlsdynamicecke(v['type'], v['startcell'], v['rdim'], v['cdim'], v['sheet_name'], wb)
+        if verbose:
+            print(v['type'],': ', k)
+        xlsvalues = xlsdynamicecke(v['type'], v['startcell'], v['rdim'], v['cdim'], v['sheet_name'], wb, verbose=verbose)
         if v['type'] == 'par':
             df = pd.DataFrame(xlsvalues)
             if v['cdim'] == 0:
@@ -177,8 +180,11 @@ def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None):
                 df = pd.DataFrame(df)
             else:
                 raise Exception('is "{}" a parameter?, verify cdim on "py" sheet. cdim must be positive integer'.format(k))
-            df = df.reset_index().rename(columns={df.columns.to_list()[-1]: 'value'})
-            df.loc[df[df['value'] == 'inf'].index, 'value'] = np.inf
+            df = df.reset_index().rename(columns={df.columns.to_list()[-1]: 'value'}).astype(object)
+            df.loc[df[df['value'].astype('str').str.lower() == 'inf'].index, 'value'] = np.inf
+            df.loc[df[df['value'].astype('str').str.lower() == '+inf'].index, 'value'] = np.inf
+            df.loc[df[df['value'].astype('str').str.lower() == '-inf'].index, 'value'] = -np.inf
+            df.loc[df[df['value'].astype('str').str.lower() == 'eps'].index, 'value'] = np.finfo(float).eps  # np.nextafter(0,1)
             df.loc[:,[c for c in df.columns if (c != 'value' and df[c].dtypes == float)]] = df[[c for c in df.columns if (c != 'value' and df[c].dtypes == float)]].astype(int)
             df.loc[:,[c for c in df.columns if c != 'value']] = df[[c for c in df.columns if c != 'value']].astype(str)
             dc[k] = df.rename(columns={c: '*' for c in df.columns if c != 'value'})
@@ -192,7 +198,7 @@ def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None):
             name = v['type'] + '_' + k + '.csv'
             df.to_csv(os.path.join(csv_copy, name), index=False)
     os.makedirs(os.path.abspath(os.path.join(gdx_file, os.pardir)), exist_ok=True)
-    print('generating gdx file...')
+    print(f'Generating gdx file: {gdx_file}')
     to_gdx(dc, gdx_file)
-    print('Done!')
+    print('GDX Done!')
     return dc
