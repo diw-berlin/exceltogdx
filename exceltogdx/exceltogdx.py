@@ -1,11 +1,14 @@
-from gdxpds import to_gdx
-import pandas as pd
-import numpy as np
+from gdxpds import load_gdxcc
+from gdxpds.write_gdx import Translator
 from openpyxl import load_workbook
 from io import BytesIO
+import pandas as pd
+import numpy as np
+import logging
 import os
 import re
 
+logging.getLogger('gdxpds').setLevel(logging.ERROR)
 
 def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb, verbose=False):
     '''
@@ -127,7 +130,7 @@ def xlsdynamicecke(typ, cell, rdim, cdim, sheetname, wb, verbose=False):
     return output
 
 
-def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None, verbose=False):
+def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None, verbose=False, gams_dir=None):
     '''
     excel_file: input file path
     gdx_file: output file path
@@ -136,12 +139,15 @@ def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None, verbose=False
                 Otherwise, csv file path.
     csv_copy: indicate folder where csv files are saved. None (Default): no csv files are created.
     '''
+    load_gdxcc(gams_dir)
+    
+    
     if csv_file is None:
         mapping = pd.read_excel(excel_file, sheet_name='py', index_col='symbol', engine='openpyxl')
     else:
         mapping = pd.read_csv(csv_file, index_col='symbol')
 
-    print(f"Loading excel file:{excel_file}")
+    print(f"Loading excel file: {excel_file}")
     with open(excel_file, 'rb') as f:
         datas = BytesIO(f.read())
     wb = load_workbook(datas, data_only=True)
@@ -199,6 +205,10 @@ def exceltogdx(excel_file, gdx_file, csv_file=None, csv_copy=None, verbose=False
             df.to_csv(os.path.join(csv_copy, name), index=False)
     os.makedirs(os.path.abspath(os.path.join(gdx_file, os.pardir)), exist_ok=True)
     print(f'Generating gdx file: {gdx_file}')
-    to_gdx(dc, gdx_file)
+    
+    translator = Translator(dc)
+    translator.gams_dir = gams_dir
+    translator.save_gdx(gdx_file)
+    translator.gdx
     print('GDX Done!')
     return dc
