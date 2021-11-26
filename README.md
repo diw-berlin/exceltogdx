@@ -5,7 +5,9 @@ See sheet name 'py' in the excel files that describes sets and parameters settin
 
 Particularly useful for linux and ios where GDXXRW.exe is not compatible, see here: https://forum.gamsworld.org/viewtopic.php?t=10418#p24019
 
-### <font color='green'>NEW FEATURE (v0.0.5):</font> <font color='red'>+INF, -INF, EPS</font> 
+### NEW FEATURE (v0.0.5):+INF, -INF, EPS
+
+### NEW FEATURE (v0.0.6): gams_dir as new argument. 
 
 Required library:
  - gdxpds
@@ -26,9 +28,10 @@ See notebook [example.ipynb](https://github.com/diw-berlin/exceltogdx/tree/maste
 
 ```
 from exceltogdx import exceltogdx
-frames = exceltogdx('test.xlsx','test.gdx')
+frames = exceltogdx('test.xlsx','test.gdx', gams_dir=None)
 ```
 
 Repository: https://github.com/diw-berlin/exceltogdx
 
-<font color='red'>If you find and error in the code, please raise an issue or solve it by pushing a commit.</font>
+
+If you find and error in the code, please raise an issue or solve it by pushing a commit.
